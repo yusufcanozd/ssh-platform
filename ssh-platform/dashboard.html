@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard — SSH KPI Platformu</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="brand-block">
+    <div class="brand-tag">SSH · KPI Dashboard</div>
+    <div class="brand-name">Rekabet Skorkartı</div>
+    <div class="brand-sub">Türkiye Otomotiv · 2022–2024</div>
+  </div>
+
+  <div class="nav-grp">Görünümler</div>
+  <button class="nav-btn on" onclick="goPage('genel',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg> Genel Bakış
+  </button>
+  <button class="nav-btn" onclick="goPage('markalar',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg> Marka Sıralaması
+  </button>
+  <button class="nav-btn" onclick="goPage('bolgeler',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="10" r="3"/>
+      <path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 12-8 12S4 15.25 4 10a8 8 0 0 1 8-8z"/>
+    </svg> Bölge Analizi
+  </button>
+  <button class="nav-btn" onclick="goPage('trend',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg> Dönemsel Trend
+  </button>
+
+  <div class="sidebar-footer">
+    <!-- Filtreler -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--tx3);
+        text-transform:uppercase;margin-bottom:8px">Filtreler</div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:9px;color:var(--tx3);display:block;margin-bottom:3px">Bölge</label>
+      <select id="fB" onchange="applyF()" style="width:100%;background:var(--surf2);
+          border:1px solid var(--bd2);border-radius:6px;color:var(--tx);
+          padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none">
+        <option value="">Tüm Türkiye</option>
+      </select>
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:9px;color:var(--tx3);display:block;margin-bottom:3px">Segment</label>
+      <select id="fS" onchange="applyF()" style="width:100%;background:var(--surf2);
+          border:1px solid var(--bd2);border-radius:6px;color:var(--tx);
+          padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none">
+        <option value="">Tüm Segmentler</option>
+        <option>Premium</option><option>Mass</option><option>EV</option>
+      </select>
+    </div>
+    <div style="border-top:1px solid var(--bd);padding-top:8px;margin-bottom:8px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--blue);
+          text-transform:uppercase;margin-bottom:6px">📅 Dönem</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div>
+          <label style="font-size:9px;color:var(--tx3);display:block;margin-bottom:3px">Yıl</label>
+          <select id="fY" onchange="applyF()" style="width:100%;background:var(--surf2);
+              border:1px solid var(--bd2);border-radius:6px;color:var(--tx);
+              padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none">
+            <option value="">Tümü</option>
+            <option>2022</option><option>2023</option><option>2024</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:9px;color:var(--tx3);display:block;margin-bottom:3px">Çeyrek</label>
+          <select id="fQ" onchange="applyF()" style="width:100%;background:var(--surf2);
+              border:1px solid var(--bd2);border-radius:6px;color:var(--tx);
+              padding:5px 8px;font-size:11px;font-family:'DM Sans',sans-serif;outline:none">
+            <option value="">Tümü</option>
+            <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="topbar-user"></div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>SSH KPI Rekabet Skorkartı</h1>
+      <p id="topbar-meta">Yükleniyor...</p>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="pill pill-approved">● Anonim Veri</span>
+      <span class="pill pill-pending">⚠ 3 KPI Kısıtlı</span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Veri yok uyarısı -->
+    <div id="no-data-banner" style="display:none;background:rgba(245,158,11,.08);
+        border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:16px 20px;
+        margin-bottom:14px;font-size:12px;color:#fbbf24">
+      ⚠ Seçilen filtre kombinasyonu için henüz onaylı KPI verisi yok.
+      Admin panelinden veri girip onayladıktan sonra buraya yansır.
+    </div>
+
+    <!-- GENEL BAKIŞ -->
+    <div id="page-genel" class="page animate-in">
+      <div class="grid-4">
+        <div class="stat-card bl"><div class="lbl">Operasyonel</div><div class="val" id="s-op">—</div><div class="sub">%35 ağırlık · 3 KPI</div></div>
+        <div class="stat-card gr"><div class="lbl">Müşteri Kalitesi</div><div class="val" id="s-mu">—</div><div class="sub">%30 ağırlık · 3 KPI</div></div>
+        <div class="stat-card am"><div class="lbl">Servis Kap.</div><div class="val" id="s-se">—</div><div class="sub">%20 ağırlık · 3 KPI</div></div>
+        <div class="stat-card rd"><div class="lbl">Kapsam&Değer</div><div class="val" id="s-ka">—</div><div class="sub">%15 ağırlık · 2 KPI</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-hd"><h3>Segment Karşılaştırma</h3></div>
+          <div style="position:relative;height:220px"><canvas id="cSeg"></canvas></div></div>
+        <div class="card"><div class="card-hd"><h3>Top 10 Marka</h3></div>
+          <div id="top10List"></div></div>
+      </div>
+    </div>
+
+    <!-- MARKA SIRALAMASI -->
+    <div id="page-markalar" class="page" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600">Marka Sıralaması</div>
+        <div style="font-size:10px;color:var(--tx3)" id="brand-note">
+          Kendi markanız dışındakiler anonim görünür
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>#</th><th>Marka</th><th>Seg.</th>
+            <th>Operasyonel</th><th>Müşteri</th><th>Servis</th><th>Kapsam</th>
+            <th style="width:160px">Genel Skor</th>
+          </tr></thead>
+          <tbody id="brandTb"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BÖLGE ANALİZİ -->
+    <div id="page-bolgeler" class="page" style="display:none">
+      <div class="card">
+        <div class="card-hd"><h3>Bölge Genel Skorları</h3></div>
+        <div id="bolgeBarChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h3>Bölge × KPI Isı Haritası</h3></div>
+        <div class="hm" id="bHeat"></div>
+      </div>
+    </div>
+
+    <!-- DÖNEMSEL TREND -->
+    <div id="page-trend" class="page" style="display:none">
+      <div class="card">
+        <div class="card-hd">
+          <h3>Genel Skor Trendi</h3>
+          <span class="hint" id="trend-note">Kendi markanız için</span>
+        </div>
+        <div style="position:relative;height:280px"><canvas id="cTrend"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<style>
+.page { display: none; }
+.page.active { display: block; }
+</style>
+
+<script>
+let prof, allScores = [], allRegions = [];
+let charts = {};
+let curPage = 'genel';
+
+async function init() {
+    prof = await requireAuth();
+    if (!prof) return;
+    renderTopbarUser(prof);
+
+    // Bölge listesi çek
+    const { data: reg } = await sb.from('regions').select('*').order('name');
+    allRegions = reg || [];
+    const regSel = document.getElementById('fB');
+    allRegions.forEach(r => {
+        const o = document.createElement('option');
+        o.value = r.id; o.textContent = r.name;
+        regSel.appendChild(o);
+    });
+
+    await loadScores();
+    goPage('genel');
+}
+
+// Filtre değerleri
+function getFilters() {
+    return {
+        region:  document.getElementById('fB').value,
+        segment: document.getElementById('fS').value,
+        year:    document.getElementById('fY').value,
+        quarter: document.getElementById('fQ').value,
+    };
+}
+
+// Skoreları çek
+async function loadScores() {
+    const f = getFilters();
+    let q = sb.from('kpi_scores')
+        .select('*, brands(code,name,segment), regions(name), periods(year,quarter)')
+        .eq('is_masked', false);
+
+    if (f.region)  q = q.eq('region_id', f.region);
+    if (f.segment) q = q.eq('brands.segment', f.segment);
+    if (f.year)    q = q.eq('periods.year', parseInt(f.year));
+    if (f.quarter) q = q.eq('periods.quarter', f.quarter);
+
+    const { data } = await q;
+    allScores = data || [];
+
+    const noData = allScores.length === 0;
+    document.getElementById('no-data-banner').style.display = noData ? 'block' : 'none';
+
+    updateMeta();
+    renderCurrentPage();
+}
+
+function applyF() { loadScores(); }
+
+function updateMeta() {
+    const f = getFilters();
+    const reg = allRegions.find(r => r.id === f.region)?.name || 'Tüm TR';
+    const donem = f.year ? (f.quarter ? f.year+' '+f.quarter : f.year+' Tümü') : '2022–2024';
+    document.getElementById('topbar-meta').textContent =
+        `${allScores.length} kayıt · ${reg} · ${f.segment||'Tüm Seg.'} · ${donem}`;
+}
+
+function goPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+    document.getElementById('page-'+id).classList.add('active');
+    if (el) el.classList.add('on');
+    curPage = id;
+    renderCurrentPage();
+}
+
+function renderCurrentPage() {
+    if (curPage === 'genel')    renderGenel();
+    if (curPage === 'markalar') renderMarkalar();
+    if (curPage === 'bolgeler') renderBolgeler();
+    if (curPage === 'trend')    renderTrend();
+}
+
+// Grafik yardımcıları
+function killChart(id) {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+const SC = { Premium:'#8b5cf6', Mass:'#3b82f6', EV:'#10b981' };
+const SA = { Premium:'rgba(139,92,246,.4)', Mass:'rgba(59,130,246,.4)', EV:'rgba(16,185,129,.4)' };
+
+// Skorları marka bazında grupla (son dönem veya ortalama)
+function groupByBrand() {
+    const map = {};
+    allScores.forEach(s => {
+        const bid = s.brand_id;
+        if (!map[bid]) map[bid] = { ...s, count: 0, sum_op:0, sum_mu:0, sum_se:0, sum_ka:0, sum_ov:0 };
+        map[bid].count++;
+        map[bid].sum_op += s.score_operational || 0;
+        map[bid].sum_mu += s.score_customer || 0;
+        map[bid].sum_se += s.score_service_capacity || 0;
+        map[bid].sum_ka += s.score_coverage || 0;
+        map[bid].sum_ov += s.score_overall || 0;
+    });
+    return Object.values(map).map(b => ({
+        ...b,
+        score_operational:      +(b.sum_op / b.count).toFixed(1),
+        score_customer:         +(b.sum_mu / b.count).toFixed(1),
+        score_service_capacity: +(b.sum_se / b.count).toFixed(1),
+        score_coverage:         +(b.sum_ka / b.count).toFixed(1),
+        score_overall:          +(b.sum_ov / b.count).toFixed(1),
+    })).sort((a, b) => b.score_overall - a.score_overall);
+}
+
+// ── GENEL BAKIŞ ──────────────────────────────────────────────
+function renderGenel() {
+    const brands = groupByBrand();
+    if (!brands.length) {
+        ['s-op','s-mu','s-se','s-ka'].forEach(id => document.getElementById(id).textContent = '—');
+        return;
+    }
+
+    const avg = k => +(brands.reduce((s,b) => s + (b[k]||0), 0) / brands.length).toFixed(1);
+    document.getElementById('s-op').textContent = avg('score_operational');
+    document.getElementById('s-mu').textContent = avg('score_customer');
+    document.getElementById('s-se').textContent = avg('score_service_capacity');
+    document.getElementById('s-ka').textContent = avg('score_coverage');
+
+    // Segment chart
+    const segs = ['Premium','Mass','EV'].filter(s => brands.some(b => b.brands?.segment === s));
+    const segScores = segs.map(s => {
+        const mb = brands.filter(b => b.brands?.segment === s);
+        return mb.length ? +(mb.reduce((a,b) => a+b.score_overall, 0) / mb.length).toFixed(1) : 0;
+    });
+
+    killChart('cSeg');
+    charts['cSeg'] = new Chart(document.getElementById('cSeg'), {
+        type:'bar',
+        data:{ labels:segs, datasets:[{ data:segScores,
+            backgroundColor:segs.map(s=>SA[s]), borderColor:segs.map(s=>SC[s]),
+            borderWidth:1.5, borderRadius:7 }] },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ display:false } },
+            scales:{ y:{ min:40, max:100, grid:{ color:'rgba(255,255,255,0.05)' },
+                ticks:{ color:'#8496b0', font:{ size:10 } } },
+              x:{ grid:{ display:false }, ticks:{ color:'#8496b0', font:{ size:11, weight:'600' } } } } }
+    });
+
+    // Top 10
+    const top10 = brands.slice(0, 10);
+    const isAdmin = ['superadmin','admin'].includes(prof.role);
+    document.getElementById('top10List').innerHTML = top10.map((b, i) => {
+        const showName = isAdmin || b.brand_id === prof.brand_id;
+        const name = showName ? (b.brands?.name || '?') : `Marka ${String.fromCharCode(65+i)}`;
+        const pct = Math.max(0, (b.score_overall - 40) / 60 * 100);
+        return `<div class="hbar-row">
+            <div class="hbar-label" style="color:${b.brand_id===prof.brand_id?'#fbbf24':'var(--tx)'}">
+              ${b.brand_id===prof.brand_id?'▶ ':''}${name}
+            </div>
+            <div class="hbar-track">
+              <div class="hbar-fill" style="width:${pct.toFixed(1)}%;background:${scoreColor(b.score_overall)}44;
+                  border-right:3px solid ${scoreColor(b.score_overall)}"></div>
+              <span class="hbar-val" style="color:${scoreColor(b.score_overall)}">${fmt(b.score_overall)}</span>
+            </div>
+            <div class="hbar-score" style="color:${scoreColor(b.score_overall)}">${fmt(b.score_overall)}</div>
+          </div>`;
+    }).join('');
+}
+
+// ── MARKA SIRALAMASI ─────────────────────────────────────────
+function renderMarkalar() {
+    const brands = groupByBrand();
+    const isAdmin = ['superadmin','admin'].includes(prof.role);
+    const seg = { Premium:'premium', Mass:'mass', EV:'ev' };
+
+    document.getElementById('brandTb').innerHTML = brands.map((b, i) => {
+        const showName = isAdmin || b.brand_id === prof.brand_id;
+        const name = showName ? (b.brands?.name||'?') : `Marka ${String.fromCharCode(65+i)}`;
+        const isMine = b.brand_id === prof.brand_id;
+        const pct = Math.max(0, (b.score_overall-40)/60*100);
+        return `<tr style="${isMine?'background:rgba(245,158,11,.04)':''}">
+            <td class="muted">${i+1}</td>
+            <td><div style="font-size:12px;font-weight:600;color:${isMine?'#fbbf24':'var(--tx)'}">
+              ${isMine?'▶ ':''}${name}</div></td>
+            <td><span class="pill pill-${seg[b.brands?.segment]||'mass'}">${b.brands?.segment||'—'}</span></td>
+            <td class="mono" style="color:${scoreColor(b.score_operational)}">${fmt(b.score_operational)}</td>
+            <td class="mono" style="color:${scoreColor(b.score_customer)}">${fmt(b.score_customer)}</td>
+            <td class="mono" style="color:${scoreColor(b.score_service_capacity)}">${fmt(b.score_service_capacity)}</td>
+            <td class="mono" style="color:${scoreColor(b.score_coverage)}">${fmt(b.score_coverage)}</td>
+            <td><div class="score-bar-wrap">
+              <div class="bar-bg"><div class="bar-fg"
+                style="width:${pct.toFixed(1)}%;background:${scoreColor(b.score_overall)}"></div></div>
+              <span class="mono" style="color:${scoreColor(b.score_overall)};width:34px;text-align:right">
+                ${fmt(b.score_overall)}</span>
+            </div></td>
+          </tr>`;
+    }).join('') || '<tr><td colspan="8"><div class="empty-state"><p>Veri yok</p></div></td></tr>';
+}
+
+// ── BÖLGE ANALİZİ ────────────────────────────────────────────
+function renderBolgeler() {
+    // Bölge bazında grupla
+    const map = {};
+    allScores.forEach(s => {
+        const rname = s.regions?.name;
+        if (!rname) return;
+        if (!map[rname]) map[rname] = { name:rname, items:[] };
+        map[rname].items.push(s);
+    });
+
+    const bEntries = Object.values(map).map(b => {
+        const n = b.items.length;
+        return {
+            name: b.name,
+            genel: +(b.items.reduce((s,x)=>s+(x.score_overall||0),0)/n).toFixed(1),
+            kpis: KPI_CONFIG.map(k => +(b.items.reduce((s,x)=>s+(x[k.key]||0),0)/n).toFixed(1)),
+        };
+    }).sort((a,b) => b.genel - a.genel);
+
+    // HTML bar chart
+    const maxS = Math.max(...bEntries.map(b=>b.genel), 80);
+    document.getElementById('bolgeBarChart').innerHTML = bEntries.length
+        ? bEntries.map(b => {
+            const pct = Math.max(0,(b.genel-40)/(maxS-40)*100);
+            return `<div class="hbar-row">
+                <div class="hbar-label">${b.name}</div>
+                <div class="hbar-track">
+                  <div class="hbar-fill" style="width:${pct.toFixed(1)}%;
+                      background:${scoreColor(b.genel)}44;border-right:3px solid ${scoreColor(b.genel)}"></div>
+                  <span class="hbar-val" style="color:${scoreColor(b.genel)}">${fmt(b.genel)}</span>
+                </div>
+                <div class="hbar-score" style="color:${scoreColor(b.genel)}">${fmt(b.genel)}</div>
+              </div>`;
+          }).join('')
+        : '<div class="empty-state"><p>Bölge verisi yok</p></div>';
+
+    // Isı haritası
+    let h = `<table class="hmt"><thead><tr><th class="lh">Bölge</th>
+        ${KPI_CONFIG.map(k=>`<th>${k.name.replace(' Endeksi','')}</th>`).join('')}
+        <th>Genel</th></tr></thead><tbody>`;
+    bEntries.forEach(b => {
+        h += `<tr><td style="padding:6px 8px;text-align:left;font-weight:600;color:var(--tx);white-space:nowrap">${b.name}</td>`;
+        b.kpis.forEach(v => {
+            h += `<td style="background:${scoreBg(v)};color:${scoreColor(v)}">${fmt(v,0)}</td>`;
+        });
+        h += `<td style="background:${scoreBg(b.genel)};color:${scoreColor(b.genel)};font-weight:700">${fmt(b.genel)}</td></tr>`;
+    });
+    h += '</tbody></table>';
+    document.getElementById('bHeat').innerHTML = h;
+}
+
+// ── DÖNEMSEL TREND ────────────────────────────────────────────
+async function renderTrend() {
+    // Kendi markasının trend verisi
+    const brandId = prof.brand_id;
+    const isAdmin = ['superadmin','admin'].includes(prof.role);
+
+    let q = sb.from('kpi_scores')
+        .select('score_overall, score_operational, score_customer, score_service_capacity, score_coverage, periods(year,quarter), brands(name)')
+        .eq('is_masked', false)
+        .order('periods.year').order('periods.quarter');
+
+    if (!isAdmin && brandId) q = q.eq('brand_id', brandId);
+    else if (isAdmin) {
+        const seg = document.getElementById('fS').value;
+        if (seg) q = q.eq('brands.segment', seg);
+    }
+
+    const { data } = await q;
+    if (!data?.length) {
+        killChart('cTrend');
+        return;
+    }
+
+    // Dönem bazında grupla
+    const pm = {};
+    data.forEach(s => {
+        const key = s.periods ? `${s.periods.year} ${s.periods.quarter}` : '?';
+        if (!pm[key]) pm[key] = { n:0, so:0, op:0, cu:0, sv:0, co:0 };
+        pm[key].n++; pm[key].so += s.score_overall||0;
+        pm[key].op += s.score_operational||0;
+        pm[key].cu += s.score_customer||0;
+        pm[key].sv += s.score_service_capacity||0;
+        pm[key].co += s.score_coverage||0;
+    });
+
+    const labels = Object.keys(pm);
+    const overall = labels.map(l => +(pm[l].so/pm[l].n).toFixed(1));
+    const cats = {
+        'Operasyonel':  labels.map(l=>+(pm[l].op/pm[l].n).toFixed(1)),
+        'Müşteri':      labels.map(l=>+(pm[l].cu/pm[l].n).toFixed(1)),
+        'Servis':       labels.map(l=>+(pm[l].sv/pm[l].n).toFixed(1)),
+        'Kapsam':       labels.map(l=>+(pm[l].co/pm[l].n).toFixed(1)),
+    };
+
+    const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444'];
+    killChart('cTrend');
+    charts['cTrend'] = new Chart(document.getElementById('cTrend'), {
+        type:'line',
+        data:{ labels, datasets:[
+            { label:'Genel', data:overall, borderColor:'#fff', backgroundColor:'rgba(255,255,255,.1)',
+              borderWidth:3, pointRadius:5, pointBackgroundColor:'#fff', tension:.3 },
+            ...Object.entries(cats).map(([name, data], i) => ({
+                label:name, data, borderColor:colors[i], backgroundColor:colors[i]+'22',
+                borderWidth:1.5, pointRadius:3, tension:.3
+            }))
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ labels:{ color:'#8496b0', font:{ size:10 }, boxWidth:10 } } },
+            scales:{ y:{ min:30, max:100, grid:{ color:'rgba(255,255,255,0.05)' },
+                ticks:{ color:'#8496b0', font:{ size:10 } } },
+              x:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8496b0', font:{ size:10 } } } } }
+    });
+
+    document.getElementById('trend-note').textContent =
+        isAdmin ? 'Sektör ortalaması' : (prof.brands?.name || 'Kendi markanız');
+}
+
+init();
+</script>
+</body>
+</html>

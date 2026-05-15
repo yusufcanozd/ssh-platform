@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Paneli — SSH KPI Platformu</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="brand-block">
+    <div class="brand-tag">SSH · Admin Paneli</div>
+    <div class="brand-name">Yönetim Merkezi</div>
+    <div class="brand-sub">Türkiye Otomotiv · 2022–2024</div>
+  </div>
+
+  <div class="nav-grp">Yönetim</div>
+  <button class="nav-btn on" onclick="showSection('dashboard',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg> Genel Bakış
+  </button>
+  <button class="nav-btn" onclick="showSection('services',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg> Servis Noktaları
+  </button>
+  <button class="nav-btn" onclick="showSection('kpi',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg> KPI Veri Girişi
+  </button>
+  <button class="nav-btn" onclick="showSection('submissions',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+    </svg> Gönderiler
+  </button>
+  <button class="nav-btn" id="nav-users" onclick="showSection('users',this)" style="display:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg> Kullanıcılar
+  </button>
+
+  <div class="nav-grp">Hızlı Erişim</div>
+  <button class="nav-btn" onclick="window.location.href='dashboard.html'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    </svg> Dashboard'a Git
+  </button>
+
+  <div class="sidebar-footer">
+    <div id="topbar-user"></div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="page-title">Genel Bakış</h1>
+      <p id="page-sub">Platform istatistikleri</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="pill pill-approved">● Sistem Aktif</span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── GENEL BAKIŞ ── -->
+    <div id="sec-dashboard" class="sec animate-in">
+      <div class="grid-4" id="stats-grid">
+        <div class="stat-card bl"><div class="lbl">Toplam Marka</div><div class="val" id="st-brands">—</div><div class="sub">Aktif katılımcı</div></div>
+        <div class="stat-card gr"><div class="lbl">Servis Noktası</div><div class="val" id="st-services">—</div><div class="sub">Kayıtlı servis</div></div>
+        <div class="stat-card am"><div class="lbl">Bekleyen Onay</div><div class="val" id="st-pending">—</div><div class="sub">KPI gönderisi</div></div>
+        <div class="stat-card pu"><div class="lbl">Kullanıcı</div><div class="val" id="st-users">—</div><div class="sub">Aktif hesap</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hd"><h3>Son Gönderiler</h3></div>
+          <div id="recent-submissions"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Dönemler</h3></div>
+          <div id="periods-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SERVİS NOKTALARI ── -->
+    <div id="sec-services" class="sec" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Servis Noktaları</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">Ekle, düzenle, pasif yap</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openServiceModal()">
+          + Yeni Servis Ekle
+        </button>
+      </div>
+
+      <div class="filter-bar">
+        <label>Marka</label>
+        <select id="sc-filter-brand" onchange="loadServices()">
+          <option value="">Tüm Markalar</option>
+        </select>
+        <label>Bölge</label>
+        <select id="sc-filter-region" onchange="loadServices()">
+          <option value="">Tüm Bölgeler</option>
+        </select>
+        <label>Durum</label>
+        <select id="sc-filter-status" onchange="loadServices()">
+          <option value="">Tümü</option>
+          <option value="true">Aktif</option>
+          <option value="false">Pasif</option>
+        </select>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Servis Adı</th><th>Marka</th><th>İl / Bölge</th>
+            <th>Kod</th><th>Telefon</th><th>Durum</th><th>İşlem</th>
+          </tr></thead>
+          <tbody id="services-tbody">
+            <tr><td colspan="7" class="empty-state">Yükleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── KPI VERİ GİRİŞİ ── -->
+    <div id="sec-kpi" class="sec" style="display:none">
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600">KPI Veri Girişi</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:2px">
+          11 KPI değerini dönem ve yaş grubu bazında girin
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h3>Veri Seçimi</h3></div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>Marka <span id="kpi-brand-lbl" style="color:var(--tx3)"></span></label>
+            <select id="kpi-brand">
+              <option value="">Seçin...</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Servis Noktası</label>
+            <select id="kpi-service">
+              <option value="">— Marka seçin —</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Dönem</label>
+            <select id="kpi-period">
+              <option value="">Seçin...</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Araç Yaş Grubu</label>
+            <select id="kpi-age">
+              <option value="0-3">0–3 Yıl</option>
+              <option value="3-7">3–7 Yıl</option>
+              <option value="7+">7+ Yıl</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <h3>KPI Değerleri</h3>
+          <span class="hint">Tüm değerler ilgili dönem ortalamasıdır</span>
+        </div>
+
+        <!-- Operasyonel -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+            color:var(--blue);margin-bottom:10px">Operasyonel Verimlilik (%35)</div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>İş Emri Süresi (saat)</label>
+            <input type="number" id="kpi-work_order_duration" placeholder="ör: 2.5" step="0.1" min="0">
+          </div>
+          <div class="form-row">
+            <label>İş Emri Hacmi (adet)</label>
+            <input type="number" id="kpi-work_order_volume" placeholder="ör: 450" min="0">
+          </div>
+          <div class="form-row">
+            <label>Aktif Müşteri Sayısı</label>
+            <input type="number" id="kpi-active_customer_base" placeholder="ör: 1200" min="0">
+          </div>
+        </div>
+
+        <!-- Müşteri -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+            color:var(--green);margin-bottom:10px;margin-top:4px">Müşteri Kalitesi (%30)</div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>İşçilik Saati / İş Emri</label>
+            <input type="number" id="kpi-labor_hours_per_wo" placeholder="ör: 1.8" step="0.1" min="0">
+          </div>
+          <div class="form-row">
+            <label>Müşteri Tutundurma (0–1) ⚠</label>
+            <input type="number" id="kpi-customer_retention" placeholder="ör: 0.72" step="0.01" min="0" max="1">
+          </div>
+          <div class="form-row">
+            <label>Servis Kullanım Oranı (0–1)</label>
+            <input type="number" id="kpi-service_usage" placeholder="ör: 0.68" step="0.01" min="0" max="1">
+          </div>
+        </div>
+
+        <!-- Servis -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+            color:var(--amber);margin-bottom:10px;margin-top:4px">Servis Kapasitesi (%20)</div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>Servis Başına İş Emri</label>
+            <input type="number" id="kpi-wo_per_service" placeholder="ör: 180" min="0">
+          </div>
+          <div class="form-row">
+            <label>Servis Başına Müşteri</label>
+            <input type="number" id="kpi-customer_per_service" placeholder="ör: 420" min="0">
+          </div>
+          <div class="form-row">
+            <label>Periyodik Bakım Uyumu (0–1)</label>
+            <input type="number" id="kpi-periodic_maintenance" placeholder="ör: 0.81" step="0.01" min="0" max="1">
+          </div>
+        </div>
+
+        <!-- Kapsam -->
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+            color:var(--red);margin-bottom:10px;margin-top:4px">Kapsam & Değer (%15)</div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>Müşteri Başına Parça (TL) ⚠</label>
+            <input type="number" id="kpi-parts_revenue_per_cust" placeholder="ör: 3200" min="0">
+          </div>
+          <div class="form-row">
+            <label>Garanti Kapsam Oranı (0–1) ⚠</label>
+            <input type="number" id="kpi-warranty_coverage" placeholder="ör: 0.45" step="0.01" min="0" max="1">
+          </div>
+        </div>
+
+        <div style="font-size:10px;color:var(--amber);background:rgba(245,158,11,.06);
+            border:1px solid rgba(245,158,11,.15);border-radius:var(--radius-sm);
+            padding:10px 12px;margin-top:8px">
+          ⚠ İşaretli KPI'lar rekabet hukuku kapsamında kısıtlıdır.
+          Sadece kendi marka trend verisi olarak işlenir.
+        </div>
+
+        <div class="form-row" style="margin-top:14px">
+          <label>Notlar (opsiyonel)</label>
+          <textarea id="kpi-notes" placeholder="Dönem ile ilgili özel not..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-primary" onclick="submitKPI()">Gönder (Onay Beklesin)</button>
+          <button class="btn btn-ghost" onclick="clearKPIForm()">Temizle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GÖNDERİLER ── -->
+    <div id="sec-submissions" class="sec" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600">KPI Gönderi Listesi</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">
+            Onaylayın, reddedin veya detayları görün
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <label>Durum</label>
+        <select id="sub-filter-status" onchange="loadSubmissions()">
+          <option value="">Tümü</option>
+          <option value="pending">Bekliyor</option>
+          <option value="approved">Onaylı</option>
+          <option value="rejected">Reddedildi</option>
+        </select>
+        <label>Marka</label>
+        <select id="sub-filter-brand" onchange="loadSubmissions()">
+          <option value="">Tüm Markalar</option>
+        </select>
+        <label>Dönem</label>
+        <select id="sub-filter-period" onchange="loadSubmissions()">
+          <option value="">Tüm Dönemler</option>
+        </select>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Marka</th><th>Servis</th><th>Dönem</th><th>Yaş Grubu</th>
+            <th>Gönderim Tarihi</th><th>Durum</th><th>İşlem</th>
+          </tr></thead>
+          <tbody id="submissions-tbody">
+            <tr><td colspan="7" class="empty-state">Yükleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── KULLANICILAR ── -->
+    <div id="sec-users" class="sec" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600">Kullanıcı Yönetimi</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">
+            Rol ata, aktif/pasif yap
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openUserModal()">
+          + Yeni Kullanıcı
+        </button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Ad Soyad</th><th>E-posta</th><th>Rol</th><th>Marka</th>
+            <th>Son Giriş</th><th>Durum</th><th>İşlem</th>
+          </tr></thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="7" class="empty-state">Yükleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── MODAL: Servis Noktası ── -->
+<div class="modal-overlay" id="modal-service">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 id="service-modal-title">Yeni Servis Ekle</h2>
+      <button class="modal-close" onclick="closeModal('modal-service')">✕</button>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row">
+        <label>Marka</label>
+        <select id="sm-brand"></select>
+      </div>
+      <div class="form-row">
+        <label>İl</label>
+        <select id="sm-province"></select>
+      </div>
+      <div class="form-row">
+        <label>Servis Kodu</label>
+        <input type="text" id="sm-code" placeholder="ör: IST-001">
+      </div>
+      <div class="form-row">
+        <label>Servis Adı</label>
+        <input type="text" id="sm-name" placeholder="ör: İstanbul Merkez Yetkili Servis">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Adres</label>
+      <textarea id="sm-address" placeholder="Açık adres..." style="min-height:60px"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Telefon</label>
+      <input type="text" id="sm-phone" placeholder="0212 xxx xx xx">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-service')">İptal</button>
+      <button class="btn btn-primary" id="service-save-btn" onclick="saveService()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Kullanıcı ── -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 id="user-modal-title">Yeni Kullanıcı</h2>
+      <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row">
+        <label>Ad Soyad</label>
+        <input type="text" id="um-name" placeholder="Ali Yılmaz">
+      </div>
+      <div class="form-row">
+        <label>E-posta</label>
+        <input type="email" id="um-email" placeholder="ali@marka.com">
+      </div>
+      <div class="form-row">
+        <label>Rol</label>
+        <select id="um-role">
+          <option value="viewer">İzleyici (viewer)</option>
+          <option value="analyst">Analist (analyst)</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Marka Bağlantısı</label>
+        <select id="um-brand">
+          <option value="">— Platform geneli —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">İptal</button>
+      <button class="btn btn-primary" id="user-save-btn" onclick="saveUser()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Gönderi Detay ── -->
+<div class="modal-overlay" id="modal-submission">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <h2>Gönderi Detayı</h2>
+      <button class="modal-close" onclick="closeModal('modal-submission')">✕</button>
+    </div>
+    <div id="sub-detail-content"></div>
+    <div class="modal-footer" id="sub-detail-actions"></div>
+  </div>
+</div>
+
+<script>
+// ── Başlat ────────────────────────────────────────────────────
+let profile, allBrands = [], allRegions = [], allProvinces = [], allPeriods = [];
+
+async function init() {
+    profile = await requireAdmin();
+    if (!profile) return;
+    renderTopbarUser(profile);
+
+    // Superadmin ise kullanıcı yönetimini göster
+    if (profile.role === 'superadmin') {
+        document.getElementById('nav-users').style.display = 'flex';
+    }
+
+    // Referans verileri çek
+    await Promise.all([loadBrands(), loadRegions(), loadPeriods()]);
+    loadDashboard();
+}
+
+// ── Referans Veriler ──────────────────────────────────────────
+async function loadBrands() {
+    const { data } = await sb.from('brands').select('*').eq('is_active', true).order('name');
+    allBrands = data || [];
+    populateBrandSelects();
+}
+
+async function loadRegions() {
+    const { data: reg }  = await sb.from('regions').select('*').order('name');
+    const { data: prov } = await sb.from('provinces').select('*, regions(name)').order('name');
+    allRegions   = reg   || [];
+    allProvinces = prov  || [];
+    populateRegionSelects();
+}
+
+async function loadPeriods() {
+    const { data } = await sb.from('periods').select('*').order('year', { ascending: false });
+    allPeriods = data || [];
+    populatePeriodSelects();
+}
+
+function populateBrandSelects() {
+    const opts = allBrands.map(b =>
+        `<option value="${b.id}" data-seg="${b.segment}">${b.name} (${b.segment})</option>`
+    ).join('');
+
+    // Her marka select'ini doldur
+    ['sc-filter-brand','sm-brand','kpi-brand','sub-filter-brand','um-brand'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const def = el.options[0].outerHTML;
+        el.innerHTML = def + opts;
+    });
+
+    // Kendi markasındaki admin sadece kendi markasını görür
+    if (!['superadmin'].includes(profile.role) && profile.brand_id) {
+        ['kpi-brand'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value   = profile.brand_id;
+            el.disabled = true;
+            document.getElementById('kpi-brand-lbl').textContent =
+                '(' + (profile.brands?.name || '') + ')';
+        });
+    }
+}
+
+function populateRegionSelects() {
+    const regOpts = allRegions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    document.getElementById('sc-filter-region').innerHTML =
+        '<option value="">Tüm Bölgeler</option>' + regOpts;
+
+    const provOpts = allProvinces.map(p =>
+        `<option value="${p.id}" data-region="${p.region_id}">${p.name} (${p.regions?.name})</option>`
+    ).join('');
+    document.getElementById('sm-province').innerHTML = '<option value="">Seçin...</option>' + provOpts;
+}
+
+function populatePeriodSelects() {
+    const opts = allPeriods
+        .filter(p => !p.is_locked)
+        .map(p => `<option value="${p.id}">${p.year} ${p.quarter}</option>`)
+        .join('');
+
+    const allOpts = allPeriods
+        .map(p => `<option value="${p.id}">${p.year} ${p.quarter}${p.is_locked ? ' 🔒' : ''}</option>`)
+        .join('');
+
+    document.getElementById('kpi-period').innerHTML = '<option value="">Seçin...</option>' + opts;
+    document.getElementById('sub-filter-period').innerHTML = '<option value="">Tüm Dönemler</option>' + allOpts;
+}
+
+// ── Bölüm Geçişi ──────────────────────────────────────────────
+function showSection(id, btn) {
+    document.querySelectorAll('.sec').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+    document.getElementById('sec-' + id).style.display = 'block';
+    btn.classList.add('on');
+
+    const titles = {
+        dashboard:   ['Genel Bakış', 'Platform istatistikleri'],
+        services:    ['Servis Noktaları', 'Kayıtlı servis merkezleri'],
+        kpi:         ['KPI Veri Girişi', '11 KPI değeri girin'],
+        submissions: ['Gönderiler', 'KPI gönderi listesi'],
+        users:       ['Kullanıcılar', 'Hesap ve rol yönetimi'],
+    };
+    const [t, s] = titles[id] || ['—', ''];
+    document.getElementById('page-title').textContent = t;
+    document.getElementById('page-sub').textContent   = s;
+
+    const loaders = {
+        dashboard:   loadDashboard,
+        services:    loadServices,
+        kpi:         null,
+        submissions: loadSubmissions,
+        users:       loadUsers,
+    };
+    if (loaders[id]) loaders[id]();
+}
+
+// ── GENEL BAKIŞ ───────────────────────────────────────────────
+async function loadDashboard() {
+    const [brands, services, pending, users, recent, periods] = await Promise.all([
+        sb.from('brands').select('id', { count:'exact', head:true }).eq('is_active', true),
+        sb.from('service_centers').select('id', { count:'exact', head:true }).eq('is_active', true),
+        sb.from('kpi_submissions').select('id', { count:'exact', head:true }).eq('status', 'pending'),
+        sb.from('profiles').select('id', { count:'exact', head:true }).eq('is_active', true),
+        sb.from('kpi_submissions')
+            .select('*, brands(name), periods(year,quarter)')
+            .order('submitted_at', { ascending: false }).limit(5),
+        sb.from('periods').select('*').order('year', { ascending: false }).order('quarter'),
+    ]);
+
+    document.getElementById('st-brands').textContent   = brands.count ?? '—';
+    document.getElementById('st-services').textContent = services.count ?? '—';
+    document.getElementById('st-pending').textContent  = pending.count ?? '—';
+    document.getElementById('st-users').textContent    = users.count ?? '—';
+
+    document.getElementById('recent-submissions').innerHTML = (recent.data || []).map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+            padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div>
+            <div style="font-size:12px;font-weight:600">${s.brands?.name || '—'}</div>
+            <div style="font-size:10px;color:var(--tx3)">
+                ${s.periods ? s.periods.year + ' ' + s.periods.quarter : '—'}
+                · ${s.vehicle_age_group} yıl
+            </div>
+          </div>
+          <span class="pill pill-${s.status}">
+            ${s.status === 'pending' ? 'Bekliyor' : s.status === 'approved' ? 'Onaylı' : 'Reddedildi'}
+          </span>
+        </div>
+    `).join('') || '<div class="empty-state"><p>Henüz gönderi yok</p></div>';
+
+    document.getElementById('periods-list').innerHTML = (periods.data || []).map(p => `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+            padding:7px 0;border-bottom:1px solid var(--bd)">
+          <div style="font-size:12px;font-weight:600">${p.year} ${p.quarter}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;color:var(--tx3)">
+              ${new Date(p.start_date).toLocaleDateString('tr')} – ${new Date(p.end_date).toLocaleDateString('tr')}
+            </span>
+            <span class="pill ${p.is_locked ? 'pill-rejected' : 'pill-approved'}">
+              ${p.is_locked ? '🔒 Kilitli' : 'Açık'}
+            </span>
+          </div>
+        </div>
+    `).join('');
+}
+
+// ── SERVİS NOKTALARI ─────────────────────────────────────────
+async function loadServices() {
+    const brand  = document.getElementById('sc-filter-brand').value;
+    const region = document.getElementById('sc-filter-region').value;
+    const status = document.getElementById('sc-filter-status').value;
+
+    let q = sb.from('service_centers')
+        .select('*, brands(name,segment), provinces(name, regions(name))')
+        .order('created_at', { ascending: false });
+
+    if (brand)  q = q.eq('brand_id', brand);
+    if (status !== '') q = q.eq('is_active', status === 'true');
+    if (region) q = q.eq('provinces.region_id', region);
+
+    const { data, error } = await q;
+    const tbody = document.getElementById('services-tbody');
+
+    if (error || !data?.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Kayıt bulunamadı</p></div></td></tr>';
+        return;
+    }
+
+    const seg = { Premium:'premium', Mass:'mass', EV:'ev' };
+    tbody.innerHTML = data.map(s => `
+        <tr>
+          <td><div style="font-size:12px;font-weight:600">${s.name}</div></td>
+          <td>
+            <span class="pill pill-${seg[s.brands?.segment] || 'mass'}">${s.brands?.segment}</span>
+            <div style="font-size:10px;color:var(--tx3);margin-top:2px">${s.brands?.name}</div>
+          </td>
+          <td>
+            <div>${s.provinces?.name}</div>
+            <div style="font-size:10px;color:var(--tx3)">${s.provinces?.regions?.name}</div>
+          </td>
+          <td class="mono muted">${s.code}</td>
+          <td class="muted">${s.phone || '—'}</td>
+          <td><span class="pill ${s.is_active ? 'pill-approved' : 'pill-rejected'}">
+            ${s.is_active ? 'Aktif' : 'Pasif'}
+          </span></td>
+          <td><div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="editService('${s.id}')">Düzenle</button>
+            <button class="btn btn-danger btn-sm"
+                onclick="toggleServiceStatus('${s.id}', ${s.is_active})">
+              ${s.is_active ? 'Pasif Yap' : 'Aktif Et'}
+            </button>
+          </div></td>
+        </tr>
+    `).join('');
+}
+
+function openServiceModal(sc = null) {
+    clearEditing();
+    document.getElementById('service-modal-title').textContent = 'Yeni Servis Ekle';
+    ['sm-brand','sm-province','sm-code','sm-name','sm-address','sm-phone']
+        .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    openModal('modal-service');
+}
+
+async function editService(id) {
+    setEditing(id);
+    document.getElementById('service-modal-title').textContent = 'Servis Düzenle';
+    const { data: s } = await sb.from('service_centers').select('*').eq('id', id).single();
+    if (!s) return;
+    document.getElementById('sm-brand').value    = s.brand_id;
+    document.getElementById('sm-province').value = s.province_id;
+    document.getElementById('sm-code').value     = s.code;
+    document.getElementById('sm-name').value     = s.name;
+    document.getElementById('sm-address').value  = s.address || '';
+    document.getElementById('sm-phone').value    = s.phone || '';
+    openModal('modal-service');
+}
+
+async function saveService() {
+    const btn = document.getElementById('service-save-btn');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+
+    const payload = {
+        brand_id:    document.getElementById('sm-brand').value,
+        province_id: document.getElementById('sm-province').value,
+        code:        document.getElementById('sm-code').value.trim().toUpperCase(),
+        name:        document.getElementById('sm-name').value.trim(),
+        address:     document.getElementById('sm-address').value.trim() || null,
+        phone:       document.getElementById('sm-phone').value.trim() || null,
+    };
+
+    if (!payload.brand_id || !payload.province_id || !payload.code || !payload.name) {
+        toast('Marka, il, kod ve ad zorunludur.', 'error');
+        btn.disabled = false; btn.textContent = 'Kaydet';
+        return;
+    }
+
+    const id = getEditing();
+    const { error } = id
+        ? await sb.from('service_centers').update(payload).eq('id', id)
+        : await sb.from('service_centers').insert(payload);
+
+    btn.disabled = false; btn.textContent = 'Kaydet';
+
+    if (error) { toast(error.message, 'error'); return; }
+    toast(id ? 'Servis güncellendi.' : 'Servis eklendi.', 'success');
+    closeModal('modal-service');
+    loadServices();
+}
+
+async function toggleServiceStatus(id, current) {
+    const { error } = await sb.from('service_centers')
+        .update({ is_active: !current }).eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    toast(current ? 'Servis pasif yapıldı.' : 'Servis aktif edildi.', 'success');
+    loadServices();
+}
+
+// ── KPI VERİ GİRİŞİ ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('kpi-brand').addEventListener('change', async function() {
+        const brandId = this.value;
+        const sc = document.getElementById('kpi-service');
+        if (!brandId) { sc.innerHTML = '<option>— Marka seçin —</option>'; return; }
+        const { data } = await sb.from('service_centers')
+            .select('id, name').eq('brand_id', brandId).eq('is_active', true).order('name');
+        sc.innerHTML = '<option value="">— Opsiyonel —</option>' +
+            (data || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    });
+});
+
+async function submitKPI() {
+    const brandId = document.getElementById('kpi-brand').value;
+    const periodId = document.getElementById('kpi-period').value;
+    const ageGroup = document.getElementById('kpi-age').value;
+
+    if (!brandId || !periodId || !ageGroup) {
+        toast('Marka, dönem ve yaş grubu zorunludur.', 'error'); return;
+    }
+
+    const kpiFields = [
+        'work_order_duration','work_order_volume','active_customer_base',
+        'labor_hours_per_wo','customer_retention','service_usage',
+        'periodic_maintenance','wo_per_service','customer_per_service',
+        'parts_revenue_per_cust','warranty_coverage'
+    ];
+
+    const payload = {
+        brand_id:         brandId,
+        service_center_id:document.getElementById('kpi-service').value || null,
+        period_id:        periodId,
+        vehicle_age_group:ageGroup,
+        notes:            document.getElementById('kpi-notes').value.trim() || null,
+        submitted_by:     profile.id,
+    };
+
+    kpiFields.forEach(f => {
+        const v = document.getElementById('kpi-' + f)?.value;
+        payload[f] = v !== '' && v !== undefined ? parseFloat(v) : null;
+    });
+
+    const { error } = await sb.from('kpi_submissions').upsert(payload, {
+        onConflict: 'brand_id,service_center_id,period_id,vehicle_age_group'
+    });
+
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Veri gönderildi. Onay bekleniyor.', 'success');
+    clearKPIForm();
+}
+
+function clearKPIForm() {
+    [
+        'kpi-service','kpi-period','kpi-age','kpi-notes',
+        'kpi-work_order_duration','kpi-work_order_volume','kpi-active_customer_base',
+        'kpi-labor_hours_per_wo','kpi-customer_retention','kpi-service_usage',
+        'kpi-periodic_maintenance','kpi-wo_per_service','kpi-customer_per_service',
+        'kpi-parts_revenue_per_cust','kpi-warranty_coverage'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = el.tagName === 'SELECT' ? el.options[0]?.value || '' : '';
+    });
+}
+
+// ── GÖNDERİLER ───────────────────────────────────────────────
+async function loadSubmissions() {
+    const status  = document.getElementById('sub-filter-status').value;
+    const brandId = document.getElementById('sub-filter-brand').value;
+    const period  = document.getElementById('sub-filter-period').value;
+
+    let q = sb.from('kpi_submissions')
+        .select('*, brands(name,segment), periods(year,quarter), service_centers(name), profiles!kpi_submissions_submitted_by_fkey(full_name)')
+        .order('submitted_at', { ascending: false }).limit(100);
+
+    if (status)  q = q.eq('status', status);
+    if (brandId) q = q.eq('brand_id', brandId);
+    if (period)  q = q.eq('period_id', period);
+
+    // Admin olmayanlar sadece kendi markasını görür
+    if (!['superadmin','admin'].includes(profile.role)) {
+        q = q.eq('brand_id', profile.brand_id);
+    }
+
+    const { data, error } = await q;
+    const tbody = document.getElementById('submissions-tbody');
+
+    if (error || !data?.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Kayıt bulunamadı</p></div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(s => `
+        <tr>
+          <td>
+            <div style="font-size:12px;font-weight:600">${s.brands?.name}</div>
+            <div style="font-size:10px;color:var(--tx3)">${s.profiles?.full_name || '—'}</div>
+          </td>
+          <td class="muted">${s.service_centers?.name || '—'}</td>
+          <td class="mono">${s.periods ? s.periods.year+' '+s.periods.quarter : '—'}</td>
+          <td>${s.vehicle_age_group} yıl</td>
+          <td class="muted">${new Date(s.submitted_at).toLocaleDateString('tr')}</td>
+          <td><span class="pill pill-${s.status}">
+            ${s.status === 'pending' ? 'Bekliyor' : s.status === 'approved' ? 'Onaylı' : 'Reddedildi'}
+          </span></td>
+          <td><div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="viewSubmission('${s.id}')">Detay</button>
+            ${s.status === 'pending' && ['superadmin','admin'].includes(profile.role) ? `
+              <button class="btn btn-success btn-sm" onclick="approveSubmission('${s.id}')">Onayla</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectSubmission('${s.id}')">Reddet</button>
+            ` : ''}
+          </div></td>
+        </tr>
+    `).join('');
+}
+
+async function viewSubmission(id) {
+    const { data: s } = await sb.from('kpi_submissions')
+        .select('*, brands(name), periods(year,quarter), service_centers(name)')
+        .eq('id', id).single();
+    if (!s) return;
+
+    const kpiRows = KPI_CONFIG.map(k => {
+        const raw_key = k.key.replace('idx_', '');
+        const v = s[raw_key];
+        return `<tr>
+            <td>${k.name}${k.compliance ? ' <span class="pill pill-pending">⚠ Kısıtlı</span>' : ''}</td>
+            <td class="mono">${v !== null && v !== undefined ? v : '—'}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('sub-detail-content').innerHTML = `
+        <div class="form-grid-2" style="margin-bottom:14px">
+          <div><div style="font-size:10px;color:var(--tx3)">Marka</div>
+               <div style="font-size:13px;font-weight:600">${s.brands?.name}</div></div>
+          <div><div style="font-size:10px;color:var(--tx3)">Servis</div>
+               <div>${s.service_centers?.name || '—'}</div></div>
+          <div><div style="font-size:10px;color:var(--tx3)">Dönem</div>
+               <div>${s.periods ? s.periods.year+' '+s.periods.quarter : '—'}</div></div>
+          <div><div style="font-size:10px;color:var(--tx3)">Araç Yaşı</div>
+               <div>${s.vehicle_age_group} yıl</div></div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>KPI</th><th>Değer</th></tr></thead>
+            <tbody>${kpiRows}</tbody>
+          </table>
+        </div>
+        ${s.notes ? `<div style="font-size:11px;color:var(--tx2);margin-top:10px">Not: ${s.notes}</div>` : ''}
+    `;
+
+    document.getElementById('sub-detail-actions').innerHTML = s.status === 'pending'
+        && ['superadmin','admin'].includes(profile.role) ? `
+        <button class="btn btn-ghost" onclick="closeModal('modal-submission')">Kapat</button>
+        <button class="btn btn-danger" onclick="rejectSubmission('${id}');closeModal('modal-submission')">Reddet</button>
+        <button class="btn btn-success" onclick="approveSubmission('${id}');closeModal('modal-submission')">Onayla</button>
+    ` : `<button class="btn btn-ghost" onclick="closeModal('modal-submission')">Kapat</button>`;
+
+    openModal('modal-submission');
+}
+
+async function approveSubmission(id) {
+    const { error } = await sb.from('kpi_submissions')
+        .update({ status: 'approved', approved_by: profile.id, approved_at: new Date().toISOString() })
+        .eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Gönderi onaylandı.', 'success');
+    loadSubmissions();
+}
+
+async function rejectSubmission(id) {
+    const { error } = await sb.from('kpi_submissions')
+        .update({ status: 'rejected', approved_by: profile.id, approved_at: new Date().toISOString() })
+        .eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    toast('Gönderi reddedildi.', 'warn');
+    loadSubmissions();
+}
+
+// ── KULLANICILAR ──────────────────────────────────────────────
+async function loadUsers() {
+    const { data, error } = await sb
+        .from('profiles')
+        .select('*, brands(name,segment)')
+        .order('created_at', { ascending: false });
+
+    const tbody = document.getElementById('users-tbody');
+    if (error || !data?.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Kullanıcı yok</p></div></td></tr>';
+        return;
+    }
+
+    const roleLabel = { superadmin:'Süper Admin', admin:'Admin', analyst:'Analist', viewer:'İzleyici' };
+    tbody.innerHTML = data.map(u => `
+        <tr>
+          <td style="font-weight:600">${u.full_name}</td>
+          <td class="muted">${u.id}</td>
+          <td><span class="user-role role-${u.role}">${roleLabel[u.role]||u.role}</span></td>
+          <td>${u.brands ? `<span class="pill pill-${(u.brands.segment||'').toLowerCase()}">${u.brands.name}</span>` : '—'}</td>
+          <td class="muted">${u.updated_at ? new Date(u.updated_at).toLocaleDateString('tr') : '—'}</td>
+          <td><span class="pill ${u.is_active ? 'pill-approved' : 'pill-rejected'}">
+            ${u.is_active ? 'Aktif' : 'Pasif'}
+          </span></td>
+          <td><div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="editUser('${u.id}','${u.role}','${u.brand_id||''}')">Düzenle</button>
+            <button class="btn btn-danger btn-sm" onclick="toggleUser('${u.id}',${u.is_active})">
+              ${u.is_active ? 'Pasif' : 'Aktif'}
+            </button>
+          </div></td>
+        </tr>
+    `).join('');
+}
+
+function openUserModal() {
+    clearEditing();
+    document.getElementById('user-modal-title').textContent = 'Yeni Kullanıcı';
+    ['um-name','um-email'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('um-role').value  = 'viewer';
+    document.getElementById('um-brand').value = '';
+    openModal('modal-user');
+}
+
+function editUser(id, role, brandId) {
+    setEditing(id);
+    document.getElementById('user-modal-title').textContent = 'Kullanıcı Düzenle';
+    document.getElementById('um-role').value  = role;
+    document.getElementById('um-brand').value = brandId;
+    // Email düzenleme desteklenmiyor (Supabase Auth)
+    document.getElementById('um-email').disabled = true;
+    openModal('modal-user');
+}
+
+async function saveUser() {
+    const btn  = document.getElementById('user-save-btn');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+
+    const id = getEditing();
+    const payload = {
+        role:     document.getElementById('um-role').value,
+        brand_id: document.getElementById('um-brand').value || null,
+    };
+
+    if (id) {
+        // Güncelle
+        const { error } = await sb.from('profiles').update(payload).eq('id', id);
+        btn.disabled = false; btn.textContent = 'Kaydet';
+        if (error) { toast(error.message, 'error'); return; }
+        toast('Kullanıcı güncellendi.', 'success');
+    } else {
+        // Yeni kullanıcı — Supabase Auth'da oluşturulmalı
+        toast('Yeni kullanıcı için Supabase Auth üzerinden davet gönderin.', 'info');
+        btn.disabled = false; btn.textContent = 'Kaydet';
+    }
+
+    closeModal('modal-user');
+    loadUsers();
+}
+
+async function toggleUser(id, current) {
+    const { error } = await sb.from('profiles').update({ is_active: !current }).eq('id', id);
+    if (error) { toast(error.message, 'error'); return; }
+    toast(current ? 'Kullanıcı pasif yapıldı.' : 'Kullanıcı aktif edildi.', 'success');
+    loadUsers();
+}
+
+// Başlat
+init();
+</script>
+</body>
+</html>
