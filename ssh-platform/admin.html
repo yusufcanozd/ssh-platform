@@ -68,11 +68,34 @@
 <div class="main">
   <div class="topbar">
     <div>
-      <h1 id="page-title">Genel Bakış</h1>
-      <p id="page-sub">Platform istatistikleri</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="window.history.back()" title="Geri dön"
+            style="width:32px;height:32px;border-radius:8px;border:1px solid var(--bd2);
+            background:var(--surf2);cursor:pointer;display:inline-flex;align-items:center;
+            justify-content:center;color:var(--tx2);transition:all .12s;flex-shrink:0"
+            onmouseover="this.style.background='var(--surf3)'"
+            onmouseout="this.style.background='var(--surf2)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div>
+          <h1 id="page-title">Genel Bakış</h1>
+          <p id="page-sub">Platform istatistikleri</p>
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <span class="pill pill-approved">● Sistem Aktif</span>
+      <button class="theme-btn" onclick="toggleTheme()" title="Tema değiştir">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
       <button class="btn btn-ghost btn-sm" onclick="logout()">Çıkış</button>
     </div>
   </div>
