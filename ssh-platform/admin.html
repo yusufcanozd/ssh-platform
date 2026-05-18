@@ -53,7 +53,7 @@
   </button>
 
   <div class="nav-grp">Hızlı Erişim</div>
-  <button class="nav-btn" onclick="showSection('kpidash',this)">
+  <button class="nav-btn" onclick="gotoDashboard()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
       <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -103,24 +103,7 @@
 
   <div class="content">
 
-    <!-- ── KPI DASHBOARD (iframe) ── -->
-    <div id="sec-kpidash" class="sec" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div>
-          <div style="font-size:13px;font-weight:600">KPI Dashboard</div>
-          <div style="font-size:10px;color:var(--tx3);margin-top:2px">Rekabet skorkartı — filtreler aktif</div>
-        </div>
-        <a href="dashboard.html" target="_blank" class="btn btn-ghost btn-sm">
-          Tam Ekran Aç ↗
-        </a>
-      </div>
-      <div style="background:var(--surf);border:1px solid var(--bd);border-radius:10px;overflow:hidden;height:calc(100vh - 160px)">
-        <iframe id="dash-iframe" src="dashboard.html"
-          style="width:100%;height:100%;border:none;display:block"
-          allow="same-origin">
-        </iframe>
-      </div>
-    </div>
+
 
     <!-- ── GENEL BAKIŞ ── -->
     <div id="sec-dashboard" class="sec animate-in">
@@ -582,8 +565,7 @@ function showSection(id, btn) {
 
     const titles = {
         dashboard:   ['Genel Bakış', 'Platform istatistikleri'],
-        kpidash:     ['KPI Dashboard', 'Rekabet skorkartı'],
-        services:    ['Servis Noktaları', 'Kayıtlı servis merkezleri'],
+services:    ['Servis Noktaları', 'Kayıtlı servis merkezleri'],
         kpi:         ['KPI Veri Girişi', '11 KPI değeri girin'],
         submissions: ['Gönderiler', 'KPI gönderi listesi'],
         users:       ['Kullanıcılar', 'Hesap ve rol yönetimi'],
@@ -594,8 +576,7 @@ function showSection(id, btn) {
 
     const loaders = {
         dashboard:   loadDashboard,
-        kpidash:     null,
-        services:    loadServices,
+services:    loadServices,
         kpi:         null,
         submissions: loadSubmissions,
         users:       loadUsers,
@@ -1032,6 +1013,12 @@ async function toggleUser(id, current) {
 
 // Başlat
 init();
+
+// Dashboard'a git — geri gelince admin'e dön
+function gotoDashboard(){
+  // Oturumu koru, sadece sayfayı değiştir
+  window.location.href = 'dashboard.html';
+}
 </script>
 </body>
 </html>
