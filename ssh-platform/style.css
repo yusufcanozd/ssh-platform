@@ -1,9 +1,6 @@
-/* ============================================================
-   SSH KPI Platform — Ortak Stiller
-   ============================================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
 
+/* ── Koyu Tema (varsayılan) ─────────────────────────────── */
 :root {
     --bg:      #0b0f1a;
     --surf:    #131929;
@@ -21,11 +18,32 @@
     --purple:  #8b5cf6;
     --radius:  10px;
     --radius-sm: 7px;
+    --shadow:  0 2px 12px rgba(0,0,0,.3);
+}
+
+/* ── Açık Tema ───────────────────────────────────────────── */
+body.light {
+    --bg:      #f0f4f8;
+    --surf:    #ffffff;
+    --surf2:   #f1f5f9;
+    --surf3:   #e2e8f0;
+    --bd:      rgba(0,0,0,.08);
+    --bd2:     rgba(0,0,0,.14);
+    --tx:      #0f172a;
+    --tx2:     #475569;
+    --tx3:     #94a3b8;
+    --blue:    #2563eb;
+    --green:   #059669;
+    --amber:   #d97706;
+    --red:     #dc2626;
+    --purple:  #7c3aed;
+    --shadow:  0 2px 12px rgba(0,0,0,.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--tx);
-    font-family: 'DM Sans', sans-serif; font-size: 13px; }
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    transition: background .2s, color .2s; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--surf3); border-radius: 4px; }
 
@@ -35,7 +53,8 @@ a:hover { text-decoration: underline; }
 /* ── Düzen ───────────────────────────────────────────────── */
 .shell { display: grid; grid-template-columns: 220px 1fr; height: 100vh; overflow: hidden; }
 .sidebar { background: var(--surf); border-right: 1px solid var(--bd);
-    display: flex; flex-direction: column; overflow-y: auto; height: 100vh; }
+    display: flex; flex-direction: column; overflow-y: auto; height: 100vh;
+    transition: background .2s; }
 .main { display: flex; flex-direction: column; overflow: hidden; height: 100vh; }
 .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
 
@@ -55,6 +74,7 @@ a:hover { text-decoration: underline; }
     transition: all .12s; width: calc(100% - 16px); }
 .nav-btn:hover { background: var(--surf2); color: var(--tx); }
 .nav-btn.on    { background: rgba(59,130,246,.14); color: #60a5fa; font-weight: 500; }
+body.light .nav-btn.on { background: rgba(37,99,235,.1); color: #2563eb; }
 .nav-btn svg   { flex-shrink: 0; opacity: .7; }
 .nav-btn.on svg { opacity: 1; }
 
@@ -63,7 +83,8 @@ a:hover { text-decoration: underline; }
 /* ── Topbar ──────────────────────────────────────────────── */
 .topbar { background: var(--surf); border-bottom: 1px solid var(--bd);
     padding: 10px 22px; display: flex; align-items: center;
-    justify-content: space-between; flex-shrink: 0; }
+    justify-content: space-between; flex-shrink: 0;
+    transition: background .2s; }
 .topbar h1 { font-size: 14px; font-weight: 700; }
 .topbar p  { font-size: 10px; color: var(--tx3); margin-top: 1px; }
 #topbar-user { display: flex; align-items: center; gap: 10px; }
@@ -77,9 +98,31 @@ a:hover { text-decoration: underline; }
 .role-analyst    { background: rgba(16,185,129,.12);  color: #34d399; }
 .role-viewer     { background: rgba(148,163,184,.1);  color: var(--tx2); }
 
+/* ── Tema Toggle Butonu ──────────────────────────────────── */
+.theme-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--bd2);
+    background: var(--surf2); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all .15s; flex-shrink: 0;
+    color: var(--tx2);
+}
+.theme-btn:hover { background: var(--surf3); color: var(--tx); }
+
+/* ── Geri Butonu ─────────────────────────────────────────── */
+.back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--bd2); background: var(--surf2);
+    color: var(--tx2); font-size: 11px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    transition: all .12s; text-decoration: none;
+}
+.back-btn:hover { background: var(--surf3); color: var(--tx); text-decoration: none; }
+.back-btn svg { flex-shrink: 0; }
+
 /* ── Kartlar ─────────────────────────────────────────────── */
 .card { background: var(--surf); border: 1px solid var(--bd);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+    border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+    transition: background .2s; }
 .card-hd { display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 14px; }
 .card-hd h3 { font-size: 13px; font-weight: 600; }
@@ -88,10 +131,12 @@ a:hover { text-decoration: underline; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 14px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 14px; }
+.two    { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 
 /* ── Özet Kartlar ────────────────────────────────────────── */
 .stat-card { background: var(--surf); border: 1px solid var(--bd);
-    border-radius: var(--radius); padding: 14px 16px; position: relative; overflow: hidden; }
+    border-radius: var(--radius); padding: 14px 16px; position: relative; overflow: hidden;
+    transition: background .2s; }
 .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0;
     height: 2px; border-radius: var(--radius) var(--radius) 0 0; }
 .stat-card.bl::before { background: var(--blue); }
@@ -107,15 +152,16 @@ a:hover { text-decoration: underline; }
 
 /* ── Tablo ───────────────────────────────────────────────── */
 .tbl-wrap { background: var(--surf); border: 1px solid var(--bd);
-    border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 14px;
+    transition: background .2s; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
 .tbl th { font-size: 9px; font-weight: 700; letter-spacing: .07em;
     text-transform: uppercase; color: var(--tx3); padding: 9px 12px;
     text-align: left; border-bottom: 1px solid var(--bd); background: var(--surf2); }
-.tbl td { padding: 8px 12px; border-bottom: 1px solid var(--bd);
-    vertical-align: middle; }
+.tbl td { padding: 8px 12px; border-bottom: 1px solid var(--bd); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: rgba(255,255,255,.02); }
+.tbl tr:hover td { background: rgba(0,0,0,.02); }
+body.light .tbl tr:hover td { background: rgba(0,0,0,.03); }
 .tbl .mono { font-family: 'DM Mono', monospace; font-size: 11px; }
 .tbl .muted { color: var(--tx3); }
 .tbl .actions { display: flex; gap: 6px; }
@@ -126,9 +172,9 @@ a:hover { text-decoration: underline; }
     font-family: 'DM Sans', sans-serif; cursor: pointer; border: none;
     transition: all .12s; }
 .btn-primary { background: var(--blue); color: #fff; }
-.btn-primary:hover { background: #2563eb; }
+.btn-primary:hover { opacity: .88; }
 .btn-success { background: var(--green); color: #fff; }
-.btn-success:hover { background: #059669; }
+.btn-success:hover { opacity: .88; }
 .btn-danger  { background: transparent; color: var(--red);
     border: 1px solid rgba(239,68,68,.3); }
 .btn-danger:hover { background: rgba(239,68,68,.1); }
@@ -154,11 +200,10 @@ a:hover { text-decoration: underline; }
 .form-row select { cursor: pointer; }
 .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.form-err { font-size: 11px; color: var(--red); margin-top: 4px; }
 
 /* ── Modal ───────────────────────────────────────────────── */
 .modal-overlay { display: none; position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,.6); align-items: center; justify-content: center; }
+    background: rgba(0,0,0,.5); align-items: center; justify-content: center; }
 .modal-overlay.active { display: flex; }
 .modal { background: var(--surf); border: 1px solid var(--bd);
     border-radius: var(--radius); width: 100%; max-width: 560px;
@@ -182,59 +227,43 @@ a:hover { text-decoration: underline; }
 .pill-approved { background: rgba(16,185,129,.12); color: #34d399; }
 .pill-rejected { background: rgba(239,68,68,.12);  color: #f87171; }
 
+body.light .pill-premium { background: rgba(109,40,217,.1); color: #7c3aed; }
+body.light .pill-mass    { background: rgba(37,99,235,.1);  color: #2563eb; }
+body.light .pill-ev      { background: rgba(5,150,105,.1);  color: #059669; }
+
 /* ── Bar ─────────────────────────────────────────────────── */
 .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
 .bar-bg  { flex: 1; background: var(--surf3); border-radius: 10px; height: 5px; overflow: hidden; }
 .bar-fg  { height: 5px; border-radius: 10px; transition: width .5s; }
 
-/* ── Hbar (yatay çubuk) ──────────────────────────────────── */
-.hbar-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.hbar-label { font-size: 11px; font-weight: 500; width: 148px; flex-shrink: 0; }
-.hbar-track { flex: 1; background: var(--surf3); border-radius: 6px;
-    height: 22px; position: relative; overflow: hidden; }
-.hbar-fill  { height: 22px; border-radius: 6px; }
-.hbar-val   { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700;
-    color: #fff; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
-.hbar-score { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700;
-    width: 36px; text-align: right; flex-shrink: 0; }
-
-/* ── Isı Haritası ────────────────────────────────────────── */
-.hm { overflow-x: auto; }
-.hmt { border-collapse: collapse; font-size: 10px; min-width: 600px; }
-.hmt th { font-size: 8px; color: var(--tx3); font-weight: 700; padding: 6px 7px;
-    text-align: center; white-space: nowrap; border-bottom: 1px solid var(--bd); }
-.hmt th.lh { text-align: left; }
-.hmt td { padding: 4px 5px; text-align: center;
-    font-family: 'DM Mono', monospace; font-weight: 500; font-size: 10px; border-radius: 3px; }
-
-/* ── Boş Durum ───────────────────────────────────────────── */
-.empty-state { padding: 40px 20px; text-align: center; color: var(--tx3); }
-.empty-state svg { opacity: .3; margin-bottom: 12px; }
-.empty-state p { font-size: 12px; margin-top: 6px; }
-
-/* ── Login Sayfası ───────────────────────────────────────── */
+/* ── Login ───────────────────────────────────────────────── */
 .login-wrap { min-height: 100vh; display: flex; align-items: center;
     justify-content: center; padding: 20px; }
 .login-card { background: var(--surf); border: 1px solid var(--bd);
-    border-radius: 14px; padding: 36px 32px; width: 100%; max-width: 400px; }
-.login-logo { margin-bottom: 28px; }
+    border-radius: 14px; padding: 36px 32px; width: 100%; max-width: 400px;
+    box-shadow: var(--shadow); }
 .login-logo h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 .login-logo p  { font-size: 11px; color: var(--tx3); }
 .login-err { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2);
     border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px;
     color: #f87171; margin-bottom: 14px; display: none; }
+body.light .login-err { color: #dc2626; }
 .login-btn { width: 100%; padding: 10px; background: var(--blue); color: #fff;
     border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
-    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .12s; }
-.login-btn:hover { background: #2563eb; }
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity .12s; }
+.login-btn:hover { opacity: .88; }
 .login-btn:disabled { opacity: .6; cursor: not-allowed; }
 
+/* ── Tema Toggle (login sayfası) ─────────────────────────── */
+.theme-toggle-fixed {
+    position: fixed; top: 16px; right: 16px; z-index: 50;
+}
+
 /* ── Animasyon ───────────────────────────────────────────── */
-@keyframes slideUp { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .animate-in { animation: fadeIn .2s ease; }
 
-/* ── Filtre Satırı ───────────────────────────────────────── */
+/* ── Filter Bar ──────────────────────────────────────────── */
 .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
     padding: 12px 16px; background: var(--surf); border: 1px solid var(--bd);
     border-radius: var(--radius); margin-bottom: 14px; }
@@ -243,6 +272,3 @@ a:hover { text-decoration: underline; }
 .filter-bar select { background: var(--surf2); border: 1px solid var(--bd2);
     border-radius: var(--radius-sm); color: var(--tx); padding: 5px 8px;
     font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; outline: none; }
-.sep { width: 1px; background: var(--bd2); height: 20px; margin: 0 4px; }
-.period-badge { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
-    border-radius: 6px; padding: 4px 10px; font-size: 10px; color: #60a5fa; font-weight: 600; }
