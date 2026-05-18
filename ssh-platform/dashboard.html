@@ -195,19 +195,10 @@ async function init(){
   if(!prof)return;
   renderTopbarUser(prof);
 
-  // Admin'den gelindiyse "Admin Paneli" geri butonunu göster
-  const fromAdmin = document.referrer.includes("admin.html") || 
-                    sessionStorage.getItem("from-admin") === "1";
-  if(fromAdmin){
-    const adminBtn = document.getElementById("admin-back-btn");
-    if(adminBtn) adminBtn.style.display = "inline-flex";
-    sessionStorage.removeItem("from-admin");
-  }
-
-  // Admin rolü ise admin butonunu her zaman göster
+  // Admin veya superadmin ise admin paneli butonunu göster
   if(["superadmin","admin"].includes(prof.role)){
-    const adminBtn = document.getElementById("admin-back-btn");
-    if(adminBtn) adminBtn.style.display = "inline-flex";
+    const adminBtn=document.getElementById("admin-back-btn");
+    if(adminBtn){ adminBtn.style.display="inline-flex"; }
   }
 
   await loadData();
